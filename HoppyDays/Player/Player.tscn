@@ -1,0 +1,152 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://Player/PlayerAnimation.tscn" type="PackedScene" id=1]
+[ext_resource path="res://GFX/Background/bg_layer1.png" type="Texture" id=2]
+[ext_resource path="res://GFX/Background/bg_layer2.png" type="Texture" id=3]
+[ext_resource path="res://GFX/Background/bg_layer3.png" type="Texture" id=4]
+[ext_resource path="res://GFX/Background/bg_layer4.png" type="Texture" id=5]
+[ext_resource path="res://SFX/jump1.ogg" type="AudioStream" id=6]
+[ext_resource path="res://SFX/pain.ogg" type="AudioStream" id=7]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends KinematicBody2D
+
+var motion = Vector2(0,0)
+
+const SPEED = 1500
+const GRAVITY = 100
+const UP = Vector2(0,-1)
+const JUMP_SPEED = 2000
+const WORLD_LIMIT = 3000
+const BOOST_MULTIPLIER = 1.5
+
+signal animate
+
+func _physics_process(delta):
+	apply_gravity()
+	jump()
+	move()
+	animate()
+	move_and_slide(motion, UP)
+
+func apply_gravity():
+	if position.y > WORLD_LIMIT:
+		get_tree().call_group(\"Gamestate\", \"end_game\")
+	elif is_on_floor() and motion.y > 0: #if your on floor and not jumping up
+		motion.y = 0
+	elif is_on_ceiling():
+		motion.y = 1
+	else:
+		motion.y += GRAVITY
+
+func jump():
+	if Input.is_action_pressed(\"jump\") and is_on_floor():
+		motion.y -= JUMP_SPEED
+		$JumpSFX.play()
+
+func move():
+	if Input.is_action_pressed(\"left\") and not Input.is_action_pressed(\"right\"):
+		motion.x = -SPEED
+	elif Input.is_action_pressed(\"right\") and not Input.is_action_pressed(\"left\"):
+		motion.x = SPEED
+	else:
+		motion.x = 0
+
+func animate():
+	emit_signal(\"animate\", motion)
+
+func end_game():
+	get_tree().change_scene(\"res://Levels/GameOver.tscn\")
+
+func hurt():
+	position.y -= 1
+	yield(get_tree(), \"idle_frame\")
+	motion.y = -JUMP_SPEED
+	$PainSFX.play()
+
+func boost():
+	position.y -= 1
+	yield(get_tree(), \"idle_frame\")
+	motion.y = -JUMP_SPEED * BOOST_MULTIPLIER
+
+
+
+"
+
+[sub_resource type="CapsuleShape2D" id=2]
+radius = 60.62
+height = 83.3063
+
+[node name="Player" type="KinematicBody2D"]
+position = Vector2( 518.389, 351.801 )
+collision_mask = 14
+script = SubResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+shape = SubResource( 2 )
+
+[node name="PlayerAnimation" parent="." instance=ExtResource( 1 )]
+animation = "hurt"
+
+[node name="Camera2D" type="Camera2D" parent="."]
+editor/display_folded = true
+position = Vector2( 500, 0 )
+current = true
+zoom = Vector2( 2, 2 )
+limit_left = 0
+limit_smoothed = true
+drag_margin_h_enabled = false
+drag_margin_v_enabled = false
+smoothing_enabled = true
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="Camera2D"]
+scroll_base_offset = Vector2( 0, -1000 )
+scroll_ignore_camera_zoom = true
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="Camera2D/ParallaxBackground"]
+motion_mirroring = Vector2( 2048, 2048 )
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/ParallaxBackground/ParallaxLayer"]
+margin_right = 40.0
+margin_bottom = 40.0
+texture = ExtResource( 2 )
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="Camera2D/ParallaxBackground"]
+motion_scale = Vector2( 0.25, 1 )
+motion_mirroring = Vector2( 2048, 0 )
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/ParallaxBackground/ParallaxLayer2"]
+margin_right = 40.0
+margin_bottom = 40.0
+texture = ExtResource( 3 )
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="Camera2D/ParallaxBackground"]
+motion_scale = Vector2( 0.5, 1 )
+motion_mirroring = Vector2( 2048, 0 )
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/ParallaxBackground/ParallaxLayer3"]
+margin_right = 40.0
+margin_bottom = 40.0
+texture = ExtResource( 4 )
+
+[node name="ParallaxLayer4" type="ParallaxLayer" parent="Camera2D/ParallaxBackground"]
+motion_scale = Vector2( 0.75, 1 )
+motion_mirroring = Vector2( 2048, 0 )
+
+[node name="TextureRect" type="TextureRect" parent="Camera2D/ParallaxBackground/ParallaxLayer4"]
+margin_right = 40.0
+margin_bottom = 40.0
+texture = ExtResource( 5 )
+
+[node name="JumpSFX" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 6 )
+volume_db = -8.0
+
+[node name="PainSFX" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 7 )
+volume_db = -8.0
+[connection signal="animate" from="." to="PlayerAnimation" method="_on_Player_animate"]
