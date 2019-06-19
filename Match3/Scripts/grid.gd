@@ -14,6 +14,11 @@ export (int) var y_offset
 
 # Obstacles Variables
 export (PoolVector2Array) var empty_spaces
+export (PoolVector2Array) var ice_spaces
+
+# Obstacle Signals
+signal make_ice
+signal damage_ice
 
 # The pieces array
 var possible_pieces = [
@@ -45,6 +50,7 @@ func _ready():
 	randomize()
 	all_pieces = make_2d_array()
 	spawn_pieces()
+	spawn_ice()
 
 func restricted_movement(place):
 	# Check empty pieces
@@ -77,6 +83,10 @@ func spawn_pieces():
 				add_child(piece)
 				piece.position = grid_to_pixel(i, j)
 				all_pieces[i][j] = piece #store
+
+func spawn_ice():
+	for i in ice_spaces.size():
+		emit_signal("make_ice", ice_spaces[i])
 
 func match_at(i, j, color):
 	# Check to left
@@ -191,6 +201,7 @@ func destroy_matched():
 		for j in height:
 			if all_pieces[i][j] != null:
 				if all_pieces[i][j].matched:
+					emit_signal("damage_ice", Vector2(i,j))
 					was_matched = true
 					all_pieces[i][j].queue_free()
 					all_pieces[i][j] = null
