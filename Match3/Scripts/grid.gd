@@ -12,6 +12,9 @@ export (int) var y_start
 export (int) var offset
 export (int) var y_offset
 
+# Obstacles Variables
+export (PoolVector2Array) var empty_spaces
+
 # The pieces array
 var possible_pieces = [
 	preload("res://Scenes/yellow_piece.tscn"),
@@ -21,6 +24,7 @@ var possible_pieces = [
 	preload("res://Scenes/green_piece.tscn"),
 	preload("res://Scenes/blue_piece.tscn")
 ]
+
 # Current pieces in the scene array
 var all_pieces = []
 
@@ -42,6 +46,13 @@ func _ready():
 	all_pieces = make_2d_array()
 	spawn_pieces()
 
+func restricted_movement(place):
+	# Check empty pieces
+	for i in empty_spaces.size():
+		if empty_spaces[i] == place:
+			return true
+	return false
+
 func make_2d_array():
 	var array = []
 	for i in width:
@@ -53,19 +64,19 @@ func make_2d_array():
 func spawn_pieces():
 	for i in width:
 		for j in height:
-			#Choose random number & store
-			var rand = floor( rand_range(0, possible_pieces.size() ))
-			var piece = possible_pieces[rand].instance()
-			var loops = 0
-			while( match_at(i, j, piece.color) && loops < 100 ):
-				rand = floor( rand_range(0, possible_pieces.size() ))
-				loops += 1
-				piece = possible_pieces[rand].instance()
-				
-			#Instance that piece from the array
-			add_child(piece)
-			piece.position = grid_to_pixel(i, j)
-			all_pieces[i][j] = piece #store
+			if !restricted_movement(Vector2(i,j)):
+				#Choose random number & store
+				var rand = floor( rand_range(0, possible_pieces.size() ))
+				var piece = possible_pieces[rand].instance()
+				var loops = 0
+				while( match_at(i, j, piece.color) && loops < 100 ):
+					rand = floor( rand_range(0, possible_pieces.size() ))
+					loops += 1
+					piece = possible_pieces[rand].instance()
+				#Instance that piece from the array
+				add_child(piece)
+				piece.position = grid_to_pixel(i, j)
+				all_pieces[i][j] = piece #store
 
 func match_at(i, j, color):
 	# Check to left
@@ -193,7 +204,7 @@ func collapse_columns():
 	for i in width:
 		for j in height:
 			# if null piece found
-			if all_pieces[i][j] == null:
+			if all_pieces[i][j] == null && !restricted_movement(Vector2(i,j)):
 				# loop above piece
 				for k in range(j+1, height):
 					# if this piece is not null
@@ -211,7 +222,7 @@ func collapse_columns():
 func refill_columns():
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] == null:
+			if all_pieces[i][j] == null && !restricted_movement(Vector2(i,j)):
 				#Choose random number & store
 				var rand = floor( rand_range(0, possible_pieces.size() ))
 				var piece = possible_pieces[rand].instance()
