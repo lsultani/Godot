@@ -96,11 +96,12 @@ func touch_input():
 func swap_pieces(column, row, direction):
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
-	all_pieces[column][row] = other_piece
-	all_pieces[column + direction.x][row + direction.y] = first_piece
-	first_piece.move(grid_to_pixel(column + direction.x, row + direction.y))
-	other_piece.move(grid_to_pixel(column, row))
-	find_matches()
+	if first_piece != null && other_piece != null:
+		all_pieces[column][row] = other_piece
+		all_pieces[column + direction.x][row + direction.y] = first_piece
+		first_piece.move(grid_to_pixel(column + direction.x, row + direction.y))
+		other_piece.move(grid_to_pixel(column, row))
+		find_matches()
 
 func touch_difference(grid_1, grid_2):
 	var difference = grid_2 - grid_1;
@@ -141,4 +142,15 @@ func find_matches():
 							all_pieces[i][j].dim()
 							all_pieces[i][j+1].matched = true
 							all_pieces[i][j+1].dim()
+	get_parent().get_node("destroy_timer").start()
 
+func destroy_matched():
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				if all_pieces[i][j].matched:
+					all_pieces[i][j].queue_free()
+					all_pieces[i][j] = null
+
+func _on_destroy_timer_timeout():
+	destroy_matched()
