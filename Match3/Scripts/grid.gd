@@ -24,6 +24,13 @@ var possible_pieces = [
 # Current pieces in the scene array
 var all_pieces = []
 
+# Swap Back Variables
+var piece_one = null
+var piece_two = null
+var last_place = Vector2(0,0)
+var last_direction = Vector2(0,0)
+var move_checked = false
+
 # Touch Variables
 var first_touch = Vector2(0,0)
 var final_touch = Vector2(0,0)
@@ -103,12 +110,27 @@ func swap_pieces(column, row, direction):
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
 	if first_piece != null && other_piece != null:
+		store_info(first_piece, other_piece, Vector2(column, row), direction)
 		state = wait
 		all_pieces[column][row] = other_piece
 		all_pieces[column + direction.x][row + direction.y] = first_piece
 		first_piece.move(grid_to_pixel(column + direction.x, row + direction.y))
 		other_piece.move(grid_to_pixel(column, row))
-		find_matches()
+		if !move_checked:
+			find_matches()
+
+func store_info(first_piece, other_piece, place, direction):
+	piece_one = first_piece
+	piece_two = other_piece
+	last_place = place
+	last_direction = direction
+
+func swap_back():
+	# Move previously swapped pieces back to original place if there is no match
+	if piece_one !=null && piece_two != null:
+		swap_pieces(last_place.x, last_place.y, last_direction)
+	state = move
+	move_checked = false
 
 func touch_difference(grid_1, grid_2):
 	var difference = grid_2 - grid_1;
@@ -153,13 +175,19 @@ func find_matches():
 	get_parent().get_node("destroy_timer").start()
 
 func destroy_matched():
+	var was_matched = false
 	for i in width:
 		for j in height:
 			if all_pieces[i][j] != null:
 				if all_pieces[i][j].matched:
+					was_matched = true
 					all_pieces[i][j].queue_free()
 					all_pieces[i][j] = null
-	get_parent().get_node("collapse_timer").start()
+	move_checked = true
+	if was_matched:
+		get_parent().get_node("collapse_timer").start()
+	else:
+		swap_back()
 
 func collapse_columns():
 	for i in width:
@@ -210,6 +238,7 @@ func after_refill():
 					get_parent().get_node("destroy_timer").start()
 					return
 	state = move
+	move_checked = false
 
 func _on_destroy_timer_timeout():
 	destroy_matched()
