@@ -42,6 +42,7 @@ var possible_pieces = [
 
 # Current pieces in the scene array
 var all_pieces = []
+var current_matches = []
 
 # Swap Back Variables
 var piece_one = null
@@ -108,7 +109,7 @@ func spawn_pieces():
 				var rand = floor( rand_range(0, possible_pieces.size() ))
 				var piece = possible_pieces[rand].instance()
 				var loops = 0
-				while( match_at(i, j, piece.color) && loops < 100 ):
+				while( match_at(i, j, piece.color) and loops < 100 ):
 					rand = floor( rand_range(0, possible_pieces.size() ))
 					loops += 1
 					piece = possible_pieces[rand].instance()
@@ -136,13 +137,13 @@ func spawn_slime():
 func match_at(i, j, color):
 	# Check to left
 	if i > 1:
-		if all_pieces[i-1][j] != null && all_pieces[i-2][j] != null:
-			if all_pieces[i-1][j].color == color && all_pieces[i-2][j].color == color:
+		if all_pieces[i-1][j] != null and all_pieces[i-2][j] != null:
+			if all_pieces[i-1][j].color == color and all_pieces[i-2][j].color == color:
 				return true
 	# Check down
 	if j > 1: 
-		if all_pieces[i][j-1] != null && all_pieces[i][j-2] != null:
-			if all_pieces[i][j-1].color == color && all_pieces[i][j-2].color == color:
+		if all_pieces[i][j-1] != null and all_pieces[i][j-2] != null:
+			if all_pieces[i][j-1].color == color and all_pieces[i][j-2].color == color:
 				return true
 
 func grid_to_pixel(column, row):
@@ -156,8 +157,8 @@ func pixel_to_grid(pixel_x, pixel_y):
 	return Vector2(new_x, new_y)
 
 func is_in_grid(grid_position):
-	if grid_position.x >= 0 && grid_position.x < width:
-		if grid_position.y >= 0 && grid_position.y < height:
+	if grid_position.x >= 0 and grid_position.x < width:
+		if grid_position.y >= 0 and grid_position.y < height:
 			return true
 	return false
 
@@ -167,7 +168,7 @@ func touch_input():
 			first_touch = pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)
 			controlling = true
 	if Input.is_action_just_released("ui_touch"):
-		if is_in_grid(pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)) && controlling:
+		if is_in_grid(pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)) and controlling:
 			controlling = false
 			final_touch = pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)
 			touch_difference(first_touch, final_touch)
@@ -175,8 +176,8 @@ func touch_input():
 func swap_pieces(column, row, direction):
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
-	if first_piece != null && other_piece != null:
-		if !restricted_move(Vector2(column, row)) && !restricted_move(Vector2(column, row) + direction):
+	if first_piece != null and other_piece != null:
+		if !restricted_move(Vector2(column, row)) and !restricted_move(Vector2(column, row) + direction):
 			store_info(first_piece, other_piece, Vector2(column, row), direction)
 			state = wait
 			all_pieces[column][row] = other_piece
@@ -194,7 +195,7 @@ func store_info(first_piece, other_piece, place, direction):
 
 func swap_back():
 	# Move previously swapped pieces back to original place if there is no match
-	if piece_one !=null && piece_two != null:
+	if piece_one !=null and piece_two != null:
 		swap_pieces(last_place.x, last_place.y, last_direction)
 	state = move
 	move_checked = false
@@ -221,21 +222,44 @@ func find_matches():
 		for j in height:
 			if all_pieces[i][j] != null:
 				var current_color = all_pieces[i][j].color
-				if i > 0 && i < width - 1:
-					#if all_pieces[i-1][j] != null && all_pieces[i+1][j] != null:
-					if !is_piece_null(i-1, j) && !is_piece_null(i+1, j):
-						if all_pieces[i-1][j].color == current_color && all_pieces[i+1][j].color == current_color:
+				if i > 0 and i < width - 1:
+					#if all_pieces[i-1][j] != null and all_pieces[i+1][j] != null:
+					if !is_piece_null(i-1, j) and !is_piece_null(i+1, j):
+						if all_pieces[i-1][j].color == current_color and all_pieces[i+1][j].color == current_color:
 							match_and_dim(all_pieces[i-1][j])
 							match_and_dim(all_pieces[i][j])
 							match_and_dim(all_pieces[i+1][j])
-				if j > 0 && j < height - 1:
-					#if all_pieces[i][j-1] != null && all_pieces[i][j+1] != null:
-					if !is_piece_null(i, j-1) && !is_piece_null(i, j+1):
-						if all_pieces[i][j-1].color == current_color && all_pieces[i][j+1].color == current_color:
+							add_to_array(Vector2(i, j))
+							add_to_array(Vector2(i + 1, j))
+							add_to_array(Vector2(i - 1, j))
+				if j > 0 and j < height - 1:
+					#if all_pieces[i][j-1] != null and all_pieces[i][j+1] != null:
+					if !is_piece_null(i, j-1) and !is_piece_null(i, j+1):
+						if all_pieces[i][j-1].color == current_color and all_pieces[i][j+1].color == current_color:
 							match_and_dim(all_pieces[i][j-1])
 							match_and_dim(all_pieces[i][j])
 							match_and_dim(all_pieces[i][j+1])
+							add_to_array(Vector2(i, j))
+							add_to_array(Vector2(i, j + 1))
+							add_to_array(Vector2(i, j - 1))
+	get_bombed_pieces()
 	get_parent().get_node("destroy_timer").start()
+
+func get_bombed_pieces():
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				if all_pieces[i][j].matched:
+					if all_pieces[i][j].is_column_bomb:
+						match_all_in_column(i)
+					elif all_pieces[i][j].is_row_bomb:
+						match_all_in_row(j)
+					elif all_pieces[i][j].is_adjacent_bomb:
+						find_adjacent_pieces(i, j)
+
+func add_to_array(value, array_to_add = current_matches):
+	if !array_to_add.has(value):
+		array_to_add.append(value)
 
 func is_piece_null(column, row):
 	if all_pieces[column][row] == null:
@@ -246,7 +270,66 @@ func match_and_dim(item):
 	item.matched = true
 	item.dim()
 
+func find_bombs():
+	# Iterate over the current_matches array
+	for i in current_matches.size():
+		# Store values for match
+		var current_column = current_matches[i].x
+		var current_row = current_matches[i].y
+		var current_color = all_pieces[current_column][current_row].color
+		var col_matched = 0
+		var row_matched = 0
+		# Iterate over current_matches to check for column, row, and color
+		for j in current_matches.size():
+			var this_column = current_matches[j].x
+			var this_row = current_matches[j].y
+			var this_color = all_pieces[current_column][current_row].color
+			if this_column == current_column and current_color == this_color:
+				col_matched += 1
+			if this_row == current_row and this_color == current_color:
+				row_matched += 1
+		# 0 is an adj bomb, 1, is a row bomb, and 2 is a column bomb
+		# 3 is a color bomb
+		if col_matched == 5 or row_matched == 5:
+			make_bomb(3, current_color)
+			return
+		elif col_matched >= 3 and row_matched >= 3:
+			make_bomb(0, current_color) #adjacent bomb
+			return
+		elif col_matched == 4:
+			make_bomb(1, current_color)
+			return
+		elif row_matched == 4:
+			make_bomb(2, current_color)
+			return
+
+func make_bomb(bomb_type, color):
+	# iterate over current_matches
+	for i in current_matches.size():
+		# Cache a few variables
+		var current_column = current_matches[i].x
+		var current_row = current_matches[i].y
+		if all_pieces[current_column][current_row] == piece_one and piece_one.color == color:
+			#Make piece_one a bomb
+			piece_one.matched = false
+			change_bomb(bomb_type, piece_one)
+		if all_pieces[current_column][current_row] == piece_two and piece_two.color == color:
+			#Make piece_two a bomb
+			piece_two.matched = false
+			change_bomb(bomb_type, piece_two)
+
+func change_bomb(bomb_type, piece):
+	if bomb_type == 0:
+		piece.make_adjacent_bomb()
+	elif bomb_type == 1:
+		piece.make_row_bomb()
+	elif bomb_type == 2:
+		piece.make_column_bomb()
+	elif bomb_type == 3:
+		piece.make_color_bomb()
+
 func destroy_matched():
+	find_bombs()
 	var was_matched = false
 	for i in width:
 		for j in height:
@@ -261,6 +344,7 @@ func destroy_matched():
 		get_parent().get_node("collapse_timer").start()
 	else:
 		swap_back()
+	current_matches.clear()
 
 func check_concrete(column, row):
 	# Check right
@@ -300,7 +384,7 @@ func collapse_columns():
 	for i in width:
 		for j in height:
 			# if null piece found
-			if all_pieces[i][j] == null && !restricted_fill(Vector2(i,j)):
+			if all_pieces[i][j] == null and !restricted_fill(Vector2(i,j)):
 				# loop above piece
 				for k in range(j+1, height):
 					# if this piece is not null
@@ -318,12 +402,12 @@ func collapse_columns():
 func refill_columns():
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] == null && !restricted_fill(Vector2(i,j)):
+			if all_pieces[i][j] == null and !restricted_fill(Vector2(i,j)):
 				#Choose random number & store
 				var rand = floor( rand_range(0, possible_pieces.size() ))
 				var piece = possible_pieces[rand].instance()
 				var loops = 0
-				while( match_at(i, j, piece.color) && loops < 100 ):
+				while( match_at(i, j, piece.color) and loops < 100 ):
 					rand = floor( rand_range(0, possible_pieces.size() ))
 					loops += 1
 					piece = possible_pieces[rand].instance()
@@ -355,7 +439,7 @@ func generate_slime():
 	if slime_spaces.size() > 0:
 		var slime_made = false
 		var tracker = 0
-		while !slime_made && tracker < 100:
+		while !slime_made and tracker < 100:
 			# Check random slime
 			var random_num = floor( rand_range( 0, slime_spaces.size() ) )
 			var curr_x = slime_spaces[random_num].x
@@ -392,6 +476,36 @@ func find_normal_neighbor(column, row):
 		if all_pieces[column][row - 1] != null:
 			return Vector2(column, row - 1)
 	return null
+
+func match_all_in_column(column):
+	for i in height:
+		if all_pieces[column][i] != null:
+			if all_pieces[column][i].is_row_bomb:
+				match_all_in_row(i)
+			if all_pieces[column][i].is_adjacent_bomb:
+				find_adjacent_pieces(column, i)
+			all_pieces[column][i].matched = true
+
+func match_all_in_row(row):
+	for i in width:
+		if all_pieces[i][row] != null:
+			if all_pieces[i][row].is_column_bomb:
+				match_all_in_column(i)
+			if all_pieces[i][row].is_adjacent_bomb:
+				find_adjacent_pieces(i, row)
+			all_pieces[i][row].matched = true
+
+func find_adjacent_pieces(column, row):
+	# one less = one greater
+	for i in range(-1, 2):
+		for j in range(-1, 2):
+			if is_in_grid(Vector2(column + i, row + j)):
+				if all_pieces[column + i][row + j] != null:
+					if all_pieces[column][i].is_row_bomb:
+						match_all_in_row(i)
+					if all_pieces[i][row].is_column_bomb:
+						match_all_in_column(i)
+					all_pieces[column + i][row + j].matched = true
 
 func _on_destroy_timer_timeout():
 	destroy_matched()
