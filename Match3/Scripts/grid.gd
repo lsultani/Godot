@@ -56,6 +56,11 @@ var first_touch = Vector2(0,0)
 var final_touch = Vector2(0,0)
 var controlling = false
 
+# Scoring Variables
+signal update_score
+export (int) var piece_value
+var streak = 1
+
 func _ready():
 	state = move
 	randomize()
@@ -339,6 +344,7 @@ func destroy_matched():
 					was_matched = true
 					all_pieces[i][j].queue_free()
 					all_pieces[i][j] = null
+					emit_signal("update_score", piece_value * streak)
 	move_checked = true
 	if was_matched:
 		get_parent().get_node("collapse_timer").start()
@@ -400,6 +406,7 @@ func collapse_columns():
 	get_parent().get_node("refill_timer").start()
 
 func refill_columns():
+	streak += 1
 	for i in width:
 		for j in height:
 			if all_pieces[i][j] == null and !restricted_fill(Vector2(i,j)):
@@ -431,6 +438,7 @@ func after_refill():
 	if !damaged_slime:
 		generate_slime()
 	state = move
+	streak = 1
 	move_checked = false
 	damaged_slime = false
 
