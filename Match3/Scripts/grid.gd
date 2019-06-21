@@ -66,6 +66,7 @@ var color_bomb_used = false
 
 # Effects
 var particle_effect = preload("res://Scenes/ParticleEffect.tscn")
+var animated_effect = preload("res://Scenes/AnimatedExplosion.tscn")
 
 func _ready():
 	state = move
@@ -366,6 +367,7 @@ func destroy_matched():
 					all_pieces[i][j].queue_free()
 					all_pieces[i][j] = null
 					make_effect(particle_effect, i, j)
+					make_effect(animated_effect, i, j)
 					emit_signal("update_score", piece_value * streak)
 	move_checked = true
 	if was_matched:
