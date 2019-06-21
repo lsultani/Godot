@@ -1,22 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Scripts/BaseMenuPanel.gd" type="Script" id=1]
-
-[sub_resource type="Animation" id=1]
-resource_name = "slide_in"
-length = 0.4
-tracks/0/type = "value"
-tracks/0/path = NodePath(".:offset")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0, 0.4 ),
-"transitions": PoolRealArray( 1, 1 ),
-"update": 0,
-"values": [ Vector2( 576, 0 ), Vector2( 0, 0 ) ]
-}
+[ext_resource path="res://Animation/slide_in.tres" type="Animation" id=2]
 
 [node name="BaseMenuPanel" type="CanvasLayer"]
 offset = Vector2( 576, 0 )
@@ -57,4 +42,4 @@ margin_right = 536.0
 margin_bottom = 20.0
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/slide_in = SubResource( 1 )
+anims/slide_in = ExtResource( 2 )

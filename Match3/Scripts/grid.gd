@@ -61,6 +61,12 @@ signal update_score
 export (int) var piece_value
 var streak = 1
 
+# Counter Variables
+signal update_counter
+export (int) var current_counter_value
+export (bool) var is_counting_moves
+signal game_over
+
 # was a color bomb used?
 var color_bomb_used = false
 
@@ -77,6 +83,9 @@ func _ready():
 	spawn_lock()
 	spawn_concrete()
 	spawn_slime()
+	emit_signal("update_counter", current_counter_value)
+	if !is_counting_moves:
+		$Timer.start()
 
 func restricted_fill(place):
 	# Check empty pieces
@@ -486,6 +495,11 @@ func after_refill():
 	move_checked = false
 	damaged_slime = false
 	color_bomb_used = false
+	if is_counting_moves:
+		current_counter_value -= 1
+		emit_signal("update_counter")
+		if current_counter_value == 0:
+			declare_game_over()
 
 func generate_slime():
 	# Make sure there are slime pieces on the board
@@ -586,3 +600,14 @@ func _on_slime_holder_remove_slime(place):
 	for i in range(slime_spaces.size() -1, -1, -1):
 		if slime_spaces[i] == place:
 			slime_spaces.remove(i)
+
+func _on_Timer_timeout():
+	current_counter_value -= 1
+	emit_signal("update_counter")
+	if current_counter_value == 0:
+		declare_game_over()
+		$Timer.stop()
+
+func declare_game_over():
+	emit_signal("game_over")
+	state = wait
