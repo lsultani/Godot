@@ -4,10 +4,12 @@ export (String) var color;
 export (Texture) var row_texture
 export (Texture) var column_texture
 export (Texture) var adjacent_texture
+export (Texture) var color_bomb_texture
 
 var is_row_bomb = false
 var is_column_bomb = false
 var is_adjacent_bomb = false
+var is_color_bomb = false
 
 var move_tween
 var matched = false
@@ -34,6 +36,12 @@ func make_adjacent_bomb():
 	is_adjacent_bomb = true
 	$Sprite.texture = adjacent_texture
 	$Sprite.modulate = Color(1, 1, 1, 1)
+
+func make_color_bomb():
+	is_color_bomb = true
+	$Sprite.texture = color_bomb_texture
+	$Sprite.modulate = Color(1, 1, 1, 1)
+	color = "Color"
 
 func dim():
 	#get_node("Sprite")

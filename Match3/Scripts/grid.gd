@@ -183,6 +183,15 @@ func swap_pieces(column, row, direction):
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
 	if first_piece != null and other_piece != null:
 		if !restricted_move(Vector2(column, row)) and !restricted_move(Vector2(column, row) + direction):
+			if is_color_bomb(first_piece, other_piece):
+				if first_piece.color == "Color":
+					match_color(other_piece.color)
+					match_and_dim(first_piece)
+					add_to_array( Vector2(column, row) )
+				else:
+					match_color(first_piece.color)
+					match_and_dim(other_piece)
+					add_to_array(Vector2(column + direction.x, row + direction.y) )
 			store_info(first_piece, other_piece, Vector2(column, row), direction)
 			state = wait
 			all_pieces[column][row] = other_piece
@@ -191,6 +200,11 @@ func swap_pieces(column, row, direction):
 			other_piece.move(grid_to_pixel(column, row))
 			if !move_checked:
 				find_matches()
+
+func is_color_bomb(piece_one, piece_two):
+	if piece_one.color == "Color" or piece_two.color == "Color":
+		return true
+	return false
 
 func store_info(first_piece, other_piece, place, direction):
 	piece_one = first_piece
@@ -385,6 +399,21 @@ func damage_special(column, row):
 	emit_signal("damage_lock", Vector2(column, row))
 	check_concrete(column, row)
 	check_slime(column, row)
+
+func match_color(color):
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				if all_pieces[i][j].color == color:
+					match_and_dim(all_pieces[i][j])
+					add_to_array( Vector2(i, j) )
+
+func clear_board():
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				match_and_dim(all_pieces[i][j])
+				add_to_array( Vector2(i, j) )
 
 func collapse_columns():
 	for i in width:
