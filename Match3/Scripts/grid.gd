@@ -58,6 +58,8 @@ var controlling = false
 
 # Scoring Variables
 signal update_score
+signal setup_max_score
+export (int) var max_score
 export (int) var piece_value
 var streak = 1
 
@@ -70,6 +72,12 @@ signal game_over
 # was a color bomb used?
 var color_bomb_used = false
 
+# Collectibles
+export (PackedScene) var collectible_piece
+export (bool) var collectibles_in_scene 
+export (int) var max_collectibles
+var current_collectibles = 0
+
 # Effects
 var particle_effect = preload("res://Scenes/ParticleEffect.tscn")
 var animated_effect = preload("res://Scenes/AnimatedExplosion.tscn")
@@ -78,14 +86,18 @@ func _ready():
 	state = move
 	randomize()
 	all_pieces = make_2d_array()
+	if collectibles_in_scene:
+		spawn_collectibles(max_collectibles)
 	spawn_pieces()
 	spawn_ice()
 	spawn_lock()
 	spawn_concrete()
 	spawn_slime()
 	emit_signal("update_counter", current_counter_value)
+	emit_signal("setup_max_score", max_score)
 	if !is_counting_moves:
 		$Timer.start()
+	
 
 func restricted_fill(place):
 	# Check empty pieces
@@ -125,7 +137,7 @@ func make_2d_array():
 func spawn_pieces():
 	for i in width:
 		for j in height:
-			if !restricted_fill(Vector2(i,j)):
+			if !restricted_fill(Vector2(i,j)) and all_pieces[i][j] == null:
 				#Choose random number & store
 				var rand = floor( rand_range(0, possible_pieces.size() ))
 				var piece = possible_pieces[rand].instance()
@@ -138,6 +150,12 @@ func spawn_pieces():
 				add_child(piece)
 				piece.position = grid_to_pixel(i, j)
 				all_pieces[i][j] = piece #store
+
+func is_piece_collectible(column, row):
+	if all_pieces[column][row] != null:
+		if all_pieces[column][row].color == "None":
+			return true
+	return false
 
 func spawn_ice():
 	for i in ice_spaces.size():
@@ -154,6 +172,20 @@ func spawn_concrete():
 func spawn_slime():
 	for i in slime_spaces.size():
 		emit_signal("make_slime", slime_spaces[i])
+
+func spawn_collectibles(number_to_spawn):
+	for i in number_to_spawn:
+		var column = floor( rand_range(0, width) )
+		# Check to make sure its an empty space or that it doesnt have a restricted piece
+		# height - 1 places at top position of column
+		# Note: Issue if you have more collectibles than actual columns 
+		while all_pieces[column][height - 1] != null or restricted_fill( Vector2(column, height - 1) ):
+			column = floor( rand_range(0, width) )
+		var current = collectible_piece.instance()
+		add_child(current)
+		current.position = grid_to_pixel(column, height - 1)
+		all_pieces[column][height - 1] = current
+		current_collectibles += 1
 
 func match_at(i, j, color):
 	# Check to left
@@ -256,7 +288,7 @@ func _process(delta):
 func find_matches():
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] != null:
+			if all_pieces[i][j] != null and !is_piece_collectible(i, j):
 				var current_color = all_pieces[i][j].color
 				if i > 0 and i < width - 1:
 					#if all_pieces[i-1][j] != null and all_pieces[i+1][j] != null:
@@ -427,7 +459,7 @@ func damage_special(column, row):
 func match_color(color):
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] != null:
+			if all_pieces[i][j] != null and !is_piece_collectible(i, j):
 				if all_pieces[i][j].color == color:
 					match_and_dim(all_pieces[i][j])
 					add_to_array( Vector2(i, j) )
@@ -435,7 +467,7 @@ func match_color(color):
 func clear_board():
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] != null:
+			if all_pieces[i][j] != null and !is_piece_collectible(i, j):
 				match_and_dim(all_pieces[i][j])
 				add_to_array( Vector2(i, j) )
 
@@ -528,25 +560,25 @@ func generate_slime():
 func find_normal_neighbor(column, row):
 	# Check Right first
 	if is_in_grid(Vector2(column + 1, row)):
-		if all_pieces[column + 1][row] != null:
+		if all_pieces[column + 1][row] != null and !is_piece_collectible(column + 1, row):
 			return Vector2(column + 1, row)
 	# Check Left 
 	elif is_in_grid(Vector2(column - 1, row)):
-		if all_pieces[column - 1][row] != null:
+		if all_pieces[column - 1][row] != null and !is_piece_collectible(column - 1, row):
 			return Vector2(column - 1, row)
 	# Check Up 
 	elif is_in_grid(Vector2(column, row + 1)):
-		if all_pieces[column][row + 1] != null:
+		if all_pieces[column][row + 1] != null and !is_piece_collectible(column, row + 1):
 			return Vector2(column, row + 1)
 	# Check Down 
 	elif is_in_grid(Vector2(column, row -1)):
-		if all_pieces[column][row - 1] != null:
+		if all_pieces[column][row - 1] != null and !is_piece_collectible(column, row -1):
 			return Vector2(column, row - 1)
 	return null
 
 func match_all_in_column(column):
 	for i in height:
-		if all_pieces[column][i] != null:
+		if all_pieces[column][i] != null and !is_piece_collectible(column, i):
 			if all_pieces[column][i].is_row_bomb:
 				match_all_in_row(i)
 			if all_pieces[column][i].is_adjacent_bomb:
