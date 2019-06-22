@@ -1,9 +1,5 @@
 extends "res://Scripts/BaseMenuPanel.gd"
 
-func _ready():
-	pass
-
-
 func _on_QuiteBtn_pressed():
 	get_tree().change_scene("res://Scenes/Game Menu.tscn")
 
