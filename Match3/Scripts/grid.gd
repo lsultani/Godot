@@ -69,6 +69,9 @@ export (int) var current_counter_value
 export (bool) var is_counting_moves
 signal game_over
 
+# Goal Check Variables
+signal check_goal
+
 # was a color bomb used?
 var color_bomb_used = false
 
@@ -403,6 +406,7 @@ func destroy_matched():
 		for j in height:
 			if all_pieces[i][j] != null:
 				if all_pieces[i][j].matched:
+					emit_signal("check_goal", all_pieces[i][j].color)
 					damage_special(i, j)
 					was_matched = true
 					all_pieces[i][j].queue_free()
