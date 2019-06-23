@@ -45,6 +45,7 @@ var possible_pieces = [
 
 # Current pieces in the scene array
 var all_pieces = []
+var clone_array = []
 var current_matches = []
 
 # Swap Back Variables
@@ -92,6 +93,7 @@ func _ready():
 	state = move
 	randomize()
 	all_pieces = make_2d_array()
+	clone_array = make_2d_array()
 	spawn_preset_pieces()
 	if collectibles_in_scene:
 		spawn_collectibles(max_collectibles)
@@ -122,10 +124,11 @@ func restricted_move(place):
 	return false
 
 func is_in_array(array, item):
-	for i in array.size():
-		if array[i] == item:
-			return true
-	return false
+	if array != null:
+		for i in array.size():
+			if array[i] == item:
+				return true
+		return false
 
 func remove_from_array(array, item):
 	for i in range(array.size() -1, -1, -1):
@@ -156,6 +159,8 @@ func spawn_pieces():
 				add_child(piece)
 				piece.position = grid_to_pixel(i, j)
 				all_pieces[i][j] = piece #store
+	if is_deadlocked():
+		shuffle_board()
 
 func is_piece_collectible(column, row):
 	if all_pieces[column][row] != null:
@@ -164,20 +169,24 @@ func is_piece_collectible(column, row):
 	return false
 
 func spawn_ice():
-	for i in ice_spaces.size():
-		emit_signal("make_ice", ice_spaces[i])
+	if ice_spaces != null:
+		for i in ice_spaces.size():
+			emit_signal("make_ice", ice_spaces[i])
 
 func spawn_lock():
-	for i in lock_spaces.size():
-		emit_signal("make_lock", lock_spaces[i])
+	if lock_spaces != null:
+		for i in lock_spaces.size():
+			emit_signal("make_lock", lock_spaces[i])
 
 func spawn_concrete():
-	for i in concrete_spaces.size():
-		emit_signal("make_concrete", concrete_spaces[i])
+	if concrete_spaces != null:
+		for i in concrete_spaces.size():
+			emit_signal("make_concrete", concrete_spaces[i])
 
 func spawn_slime():
-	for i in slime_spaces.size():
-		emit_signal("make_slime", slime_spaces[i])
+	if slime_spaces != null:	
+		for i in slime_spaces.size():
+			emit_signal("make_slime", slime_spaces[i])
 
 func spawn_collectibles(number_to_spawn):
 	for i in number_to_spawn:
@@ -194,12 +203,13 @@ func spawn_collectibles(number_to_spawn):
 		current_collectibles += 1
 
 func spawn_preset_pieces():
-	if preset_spaces.size() > 0:
-		for i in preset_spaces.size():
-			var piece = possible_pieces[preset_spaces[i].z].instance()
-			add_child(piece)
-			piece.position = grid_to_pixel(preset_spaces[i].x, preset_spaces[i].y)
-			all_pieces[preset_spaces[i].x][preset_spaces[i].y] = piece #store 
+	if preset_spaces != null:
+		if preset_spaces.size() > 0:
+			for i in preset_spaces.size():
+				var piece = possible_pieces[preset_spaces[i].z].instance()
+				add_child(piece)
+				piece.position = grid_to_pixel(preset_spaces[i].x, preset_spaces[i].y)
+				all_pieces[preset_spaces[i].x][preset_spaces[i].y] = piece #store 
 
 func match_at(i, j, color):
 	# Check to left
@@ -245,6 +255,7 @@ func swap_pieces(column, row, direction):
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
 	if first_piece != null and other_piece != null:
 		if !restricted_move(Vector2(column, row)) and !restricted_move(Vector2(column, row) + direction):
+			# If both pieces are color bomb clear board
 			if first_piece.color == "Color" and other_piece.color == "Color":
 				clear_board()
 			if is_color_bomb(first_piece, other_piece):
@@ -304,31 +315,39 @@ func _process(delta):
 	if state == move:
 		touch_input()
 
-func find_matches():
+func find_matches(query = false, array = all_pieces):
 	for i in width:
 		for j in height:
-			if all_pieces[i][j] != null and !is_piece_collectible(i, j):
-				var current_color = all_pieces[i][j].color
+			if array[i][j] != null and !is_piece_collectible(i, j):
+				var current_color = array[i][j].color
 				if i > 0 and i < width - 1:
-					#if all_pieces[i-1][j] != null and all_pieces[i+1][j] != null:
+					#if array[i-1][j] != null and array[i+1][j] != null:
 					if !is_piece_null(i-1, j) and !is_piece_null(i+1, j):
-						if all_pieces[i-1][j].color == current_color and all_pieces[i+1][j].color == current_color:
-							match_and_dim(all_pieces[i-1][j])
-							match_and_dim(all_pieces[i][j])
-							match_and_dim(all_pieces[i+1][j])
+						if array[i-1][j].color == current_color and array[i+1][j].color == current_color:
+							# There is a match
+							if query:
+								return true
+							match_and_dim(array[i-1][j])
+							match_and_dim(array[i][j])
+							match_and_dim(array[i+1][j])
 							add_to_array(Vector2(i, j))
 							add_to_array(Vector2(i + 1, j))
 							add_to_array(Vector2(i - 1, j))
 				if j > 0 and j < height - 1:
-					#if all_pieces[i][j-1] != null and all_pieces[i][j+1] != null:
+					#if array[i][j-1] != null and array[i][j+1] != null:
 					if !is_piece_null(i, j-1) and !is_piece_null(i, j+1):
-						if all_pieces[i][j-1].color == current_color and all_pieces[i][j+1].color == current_color:
-							match_and_dim(all_pieces[i][j-1])
-							match_and_dim(all_pieces[i][j])
-							match_and_dim(all_pieces[i][j+1])
+						if array[i][j-1].color == current_color and array[i][j+1].color == current_color:
+							# There is a match
+							if query:
+								return true
+							match_and_dim(array[i][j-1])
+							match_and_dim(array[i][j])
+							match_and_dim(array[i][j+1])
 							add_to_array(Vector2(i, j))
 							add_to_array(Vector2(i, j + 1))
 							add_to_array(Vector2(i, j - 1))
+	if query:
+		return false
 	get_bombed_pieces()
 	get_parent().get_node("destroy_timer").start()
 
@@ -559,6 +578,8 @@ func after_refill():
 	move_checked = false
 	damaged_slime = false
 	color_bomb_used = false
+	if is_deadlocked():
+		$ShuffleTimer.start()
 	if is_counting_moves:
 		current_counter_value -= 1
 		emit_signal("update_counter")
@@ -645,6 +666,81 @@ func find_adjacent_pieces(column, row):
 						match_color(all_pieces[column + i][row + j].color)
 					all_pieces[column + i][row + j].matched = true
 
+func destroy_collectible():
+	for i in width:
+		if all_pieces[i][0] != null:
+			if all_pieces[i][0].color == "None":
+				all_pieces[i][0].matched = true
+				current_collectibles -= 1
+
+func switch_pieces(place, direction, array):
+	if is_in_grid(place) and !restricted_fill(place):
+		if is_in_grid(place + direction) and !restricted_fill(place + direction):
+			# First, hold the piece to swap with
+			var holder = array[place.x + direction.x][place.y + direction.y]
+			# Then set the swap spot as the original piece
+			array[place.x + direction.x][place.y + direction.y] = array[place.x][place.y]
+			# Set the original spot as the other piece
+			array[place.x][place.y] = holder
+
+func is_deadlocked():
+	# Create a copy of the all_pieces array
+	clone_array = copy_array(all_pieces)
+	for i in width:
+		for j in height:
+			#switch and check right
+			if switch_and_check(Vector2(i,j), Vector2(1,0), clone_array):
+				return false
+			#switch and check up
+			if switch_and_check(Vector2(i,j), Vector2(0,1), clone_array):
+				return false
+	return true
+
+func switch_and_check(place, direction, array):
+	switch_pieces(place, direction, array)
+	if find_matches(true, array):
+		switch_pieces(place, direction, array)
+		return true
+	switch_pieces(place, direction, array)
+	return false
+
+func copy_array(array_to_copy):
+	var new_array = make_2d_array()
+	for i in width:
+		for j in height:
+			new_array[i][j] = array_to_copy[i][j]
+	return new_array
+
+func clear_and_store_board():
+	var holder_array = []
+	for i in width:
+		for j in height:
+			if all_pieces[i][j] != null:
+				holder_array.append(all_pieces[i][j])
+				all_pieces[i][j] = null
+	return holder_array
+
+func shuffle_board():
+	var holder_array = clear_and_store_board()
+	for i in width:
+		for j in height:
+			if !restricted_fill(Vector2(i,j)) and all_pieces[i][j] == null:
+				#Choose random number & store
+				var rand = floor( rand_range(0, holder_array.size() ))
+				var piece = holder_array[rand]
+				var loops = 0
+				while( match_at(i, j, piece.color) and loops < 100 ):
+					rand = floor( rand_range(0, holder_array.size() ))
+					loops += 1
+					piece = holder_array[rand]
+				piece.move( grid_to_pixel(i, j) )
+				all_pieces[i][j] = piece #store
+				holder_array.remove(rand)
+	if is_deadlocked():
+		shuffle_board()
+	state = move
+
+
 func _on_destroy_timer_timeout():
 	destroy_matched()
 
@@ -685,3 +781,6 @@ func declare_game_over():
 
 func _on_GoalHolder_game_won():
 	state = wait
+
+func _on_ShuffleTimer_timeout():
+	shuffle_board()
