@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Scripts/HintEffect.gd" type="Script" id=1]
+[ext_resource path="res://Assets/Pieces/Blue Piece.png" type="Texture" id=2]
+
+[node name="HintEffect" type="Node2D"]
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Sprite" type="Sprite" parent="."]
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 2 )
+
+[node name="SizeTween" type="Tween" parent="."]
+
+[node name="ColorTween" type="Tween" parent="."]
+[connection signal="tween_all_completed" from="SizeTween" to="." method="_on_SizeTween_tween_all_completed"]
+[connection signal="tween_all_completed" from="ColorTween" to="." method="_on_ColorTween_tween_all_completed"]

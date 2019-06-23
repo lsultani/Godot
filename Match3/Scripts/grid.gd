@@ -1,7 +1,7 @@
 extends Node2D
 
 # State Machine
-enum {wait, move}
+enum {wait, move, win}
 var state 
 
 # Grid Variables
@@ -42,6 +42,11 @@ var possible_pieces = [
 	preload("res://Scenes/green_piece.tscn"),
 	preload("res://Scenes/blue_piece.tscn")
 ]
+
+# Hints Variables
+export (PackedScene) var hint_effect
+var hint = null
+var hint_match_color = ""
 
 # Current pieces in the scene array
 var all_pieces = []
@@ -161,6 +166,7 @@ func spawn_pieces():
 				all_pieces[i][j] = piece #store
 	if is_deadlocked():
 		shuffle_board()
+	$HintTimer.start()
 
 func is_piece_collectible(column, row):
 	if all_pieces[column][row] != null:
@@ -244,6 +250,7 @@ func touch_input():
 		if is_in_grid(pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)):
 			first_touch = pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)
 			controlling = true
+			destroy_hint()
 	if Input.is_action_just_released("ui_touch"):
 		if is_in_grid(pixel_to_grid(get_global_mouse_position().x, get_global_mouse_position().y)) and controlling:
 			controlling = false
@@ -297,6 +304,7 @@ func swap_back():
 		swap_pieces(last_place.x, last_place.y, last_direction)
 	state = move
 	move_checked = false
+	$HintTimer.start()
 
 func touch_difference(grid_1, grid_2):
 	var difference = grid_2 - grid_1;
@@ -318,14 +326,14 @@ func _process(delta):
 func find_matches(query = false, array = all_pieces):
 	for i in width:
 		for j in height:
-			if array[i][j] != null and !is_piece_collectible(i, j):
+			if array[i][j] != null:
 				var current_color = array[i][j].color
 				if i > 0 and i < width - 1:
-					#if array[i-1][j] != null and array[i+1][j] != null:
-					if !is_piece_null(i-1, j) and !is_piece_null(i+1, j):
+					if array[i-1][j] != null and array[i+1][j] != null:
 						if array[i-1][j].color == current_color and array[i+1][j].color == current_color:
 							# There is a match
 							if query:
+								hint_match_color = current_color
 								return true
 							match_and_dim(array[i-1][j])
 							match_and_dim(array[i][j])
@@ -334,11 +342,11 @@ func find_matches(query = false, array = all_pieces):
 							add_to_array(Vector2(i + 1, j))
 							add_to_array(Vector2(i - 1, j))
 				if j > 0 and j < height - 1:
-					#if array[i][j-1] != null and array[i][j+1] != null:
-					if !is_piece_null(i, j-1) and !is_piece_null(i, j+1):
+					if array[i][j-1] != null and array[i][j+1] != null:
 						if array[i][j-1].color == current_color and array[i][j+1].color == current_color:
 							# There is a match
 							if query:
+								hint_match_color = current_color
 								return true
 							match_and_dim(array[i][j-1])
 							match_and_dim(array[i][j])
@@ -367,8 +375,8 @@ func add_to_array(value, array_to_add = current_matches):
 	if !array_to_add.has(value):
 		array_to_add.append(value)
 
-func is_piece_null(column, row):
-	if all_pieces[column][row] == null:
+func is_piece_null(column, row, array = all_pieces):
+	if array[column][row] == null:
 		return true
 	return false
 
@@ -457,6 +465,7 @@ func destroy_matched():
 					emit_signal("update_score", piece_value * streak)
 	move_checked = true
 	if was_matched:
+		destroy_hint()
 		get_parent().get_node("collapse_timer").start()
 	else:
 		swap_back()
@@ -573,7 +582,6 @@ func after_refill():
 					return
 	if !damaged_slime:
 		generate_slime()
-	state = move
 	streak = 1
 	move_checked = false
 	damaged_slime = false
@@ -581,10 +589,14 @@ func after_refill():
 	if is_deadlocked():
 		$ShuffleTimer.start()
 	if is_counting_moves:
-		current_counter_value -= 1
-		emit_signal("update_counter")
-		if current_counter_value == 0:
-			declare_game_over()
+		if state != win:
+			current_counter_value -= 1
+			emit_signal("update_counter")
+			if current_counter_value == 0:
+				declare_game_over()
+			else:
+				state = move
+	$HintTimer.start()
 
 func generate_slime():
 	# Make sure there are slime pieces on the board
@@ -740,6 +752,43 @@ func shuffle_board():
 		shuffle_board()
 	state = move
 
+func find_all_matches():
+	var hint_holder = []
+	clone_array = copy_array(all_pieces)
+	for i in width:
+		for j in height:
+			if clone_array[i][j] != null:
+				if switch_and_check(Vector2(i,j), Vector2(1,0), clone_array) and is_in_grid(Vector2(i+1, j)):
+					#add the piece i, j to the hint_holder
+					if hint_match_color != "":
+						if hint_match_color == clone_array[i][j].color:
+							hint_holder.append(clone_array[i][j])
+						else:
+							hint_holder.append(clone_array[i+1][j])
+				if switch_and_check(Vector2(i,j), Vector2(0,1), clone_array) and is_in_grid(Vector2(i, j+1)):
+					#add the piece i, j to the hint_holder
+					if hint_match_color != "":
+						if hint_match_color == clone_array[i][j].color:
+							hint_holder.append(clone_array[i][j])
+						else:
+							hint_holder.append(clone_array[i][j+1])
+	return hint_holder
+
+func generate_hint():
+	var hints = find_all_matches()
+	if hints != null:
+		if hints.size() > 0:
+			destroy_hint()
+			var rand = floor( rand_range(0, hints.size() ) )
+			hint = hint_effect.instance()
+			add_child(hint)
+			hint.position = hints[rand].position
+			hint.Setup(hints[rand].get_node("Sprite").texture)
+
+func destroy_hint():
+	if hint:
+		hint.queue_free()
+		hint = null
 
 func _on_destroy_timer_timeout():
 	destroy_matched()
@@ -772,7 +821,8 @@ func _on_Timer_timeout():
 	current_counter_value -= 1
 	emit_signal("update_counter")
 	if current_counter_value == 0:
-		declare_game_over()
+		if state != win:
+			declare_game_over()
 		$Timer.stop()
 
 func declare_game_over():
@@ -780,7 +830,10 @@ func declare_game_over():
 	state = wait
 
 func _on_GoalHolder_game_won():
-	state = wait
+	state = win
 
 func _on_ShuffleTimer_timeout():
 	shuffle_board()
+
+func _on_HintTimer_timeout():
+	generate_hint()
