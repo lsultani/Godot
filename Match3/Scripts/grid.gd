@@ -30,6 +30,9 @@ signal damage_concrete
 signal make_slime
 signal damage_slime
 
+# Preset Board
+export (PoolVector3Array) var preset_spaces
+
 # The pieces array
 var possible_pieces = [
 	preload("res://Scenes/yellow_piece.tscn"),
@@ -89,6 +92,7 @@ func _ready():
 	state = move
 	randomize()
 	all_pieces = make_2d_array()
+	spawn_preset_pieces()
 	if collectibles_in_scene:
 		spawn_collectibles(max_collectibles)
 	spawn_pieces()
@@ -100,7 +104,6 @@ func _ready():
 	emit_signal("setup_max_score", max_score)
 	if !is_counting_moves:
 		$Timer.start()
-	
 
 func restricted_fill(place):
 	# Check empty pieces
@@ -190,6 +193,14 @@ func spawn_collectibles(number_to_spawn):
 		all_pieces[column][height - 1] = current
 		current_collectibles += 1
 
+func spawn_preset_pieces():
+	if preset_spaces.size() > 0:
+		for i in preset_spaces.size():
+			var piece = possible_pieces[preset_spaces[i].z].instance()
+			add_child(piece)
+			piece.position = grid_to_pixel(preset_spaces[i].x, preset_spaces[i].y)
+			all_pieces[preset_spaces[i].x][preset_spaces[i].y] = piece #store 
+
 func match_at(i, j, color):
 	# Check to left
 	if i > 1:
@@ -234,7 +245,12 @@ func swap_pieces(column, row, direction):
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
 	if first_piece != null and other_piece != null:
 		if !restricted_move(Vector2(column, row)) and !restricted_move(Vector2(column, row) + direction):
+			if first_piece.color == "Color" and other_piece.color == "Color":
+				clear_board()
 			if is_color_bomb(first_piece, other_piece):
+				if is_piece_collectible(column, row) or is_piece_collectible(column + direction.x, row + direction.y):
+					swap_back()
+					return #exit method entirely
 				if first_piece.color == "Color":
 					match_color(other_piece.color)
 					match_and_dim(first_piece)
@@ -342,37 +358,39 @@ func match_and_dim(item):
 	item.dim()
 
 func find_bombs():
-	# Iterate over the current_matches array
-	for i in current_matches.size():
-		# Store values for match
-		var current_column = current_matches[i].x
-		var current_row = current_matches[i].y
-		var current_color = all_pieces[current_column][current_row].color
-		var col_matched = 0
-		var row_matched = 0
-		# Iterate over current_matches to check for column, row, and color
-		for j in current_matches.size():
-			var this_column = current_matches[j].x
-			var this_row = current_matches[j].y
-			var this_color = all_pieces[current_column][current_row].color
-			if this_column == current_column and current_color == this_color:
-				col_matched += 1
-			if this_row == current_row and this_color == current_color:
-				row_matched += 1
-		# 0 is an adj bomb, 1, is a row bomb, and 2 is a column bomb
-		# 3 is a color bomb
-		if col_matched == 5 or row_matched == 5:
-			make_bomb(3, current_color)
-			return
-		elif col_matched >= 3 and row_matched >= 3:
-			make_bomb(0, current_color) #adjacent bomb
-			return
-		elif col_matched == 4:
-			make_bomb(1, current_color)
-			return
-		elif row_matched == 4:
-			make_bomb(2, current_color)
-			return
+	#If not a color bomb used
+	if !color_bomb_used:
+		# Iterate over the current_matches array
+		for i in current_matches.size():
+			# Store values for match
+			var current_column = current_matches[i].x
+			var current_row = current_matches[i].y
+			var current_color = all_pieces[current_column][current_row].color
+			var col_matched = 0
+			var row_matched = 0
+			# Iterate over current_matches to check for column, row, and color
+			for j in current_matches.size():
+				var this_column = current_matches[j].x
+				var this_row = current_matches[j].y
+				var this_color = all_pieces[this_column][this_row].color
+				if this_column == current_column and current_color == this_color:
+					col_matched += 1
+				if this_row == current_row and this_color == current_color:
+					row_matched += 1
+			# 0 is an adj bomb, 1, is a row bomb, and 2 is a column bomb
+			# 3 is a color bomb
+			if col_matched == 5 or row_matched == 5:
+				make_bomb(3, current_color)
+				continue
+			elif col_matched >= 3 and row_matched >= 3:
+				make_bomb(0, current_color) #adjacent bomb
+				continue
+			elif col_matched == 4:
+				make_bomb(1, current_color)
+				continue
+			elif row_matched == 4:
+				make_bomb(2, current_color)
+				continue
 
 func make_bomb(bomb_type, color):
 	# iterate over current_matches
@@ -382,10 +400,14 @@ func make_bomb(bomb_type, color):
 		var current_row = current_matches[i].y
 		if all_pieces[current_column][current_row] == piece_one and piece_one.color == color:
 			#Make piece_one a bomb
+			damage_special(current_column, current_row)
+			emit_signal("check_goal", piece_one.color)
 			piece_one.matched = false
 			change_bomb(bomb_type, piece_one)
 		if all_pieces[current_column][current_row] == piece_two and piece_two.color == color:
 			#Make piece_two a bomb
+			damage_special(current_column, current_row)
+			emit_signal("check_goal", piece_two.color)
 			piece_two.matched = false
 			change_bomb(bomb_type, piece_two)
 
@@ -465,6 +487,12 @@ func match_color(color):
 		for j in height:
 			if all_pieces[i][j] != null and !is_piece_collectible(i, j):
 				if all_pieces[i][j].color == color:
+					if all_pieces[i][j].is_column_bomb:
+						match_all_in_column(i)
+					if all_pieces[i][j].is_row_bomb:
+						match_all_in_row(j)
+					if all_pieces[i][j].is_column_bomb:
+						find_adjacent_pieces(i, j)
 					match_and_dim(all_pieces[i][j])
 					add_to_array( Vector2(i, j) )
 
@@ -587,6 +615,8 @@ func match_all_in_column(column):
 				match_all_in_row(i)
 			if all_pieces[column][i].is_adjacent_bomb:
 				find_adjacent_pieces(column, i)
+			if all_pieces[column][i].is_color_bomb:
+				match_color(all_pieces[column][i].color)
 			all_pieces[column][i].matched = true
 
 func match_all_in_row(row):
@@ -596,6 +626,8 @@ func match_all_in_row(row):
 				match_all_in_column(i)
 			if all_pieces[i][row].is_adjacent_bomb:
 				find_adjacent_pieces(i, row)
+			if all_pieces[i][row].is_color_bomb:
+				match_color(all_pieces[i][row].color)
 			all_pieces[i][row].matched = true
 
 func find_adjacent_pieces(column, row):
@@ -605,10 +637,12 @@ func find_adjacent_pieces(column, row):
 			# Check to see if is in grid
 			if is_in_grid(Vector2(column + i, row + j)):
 				if all_pieces[column + i][row + j] != null:
-					if all_pieces[column][row + j].is_row_bomb:
-						match_all_in_row(i)
-					if all_pieces[column + i][row].is_column_bomb:
+					if all_pieces[column + i][row + j].is_row_bomb:
+						match_all_in_row(j)
+					if all_pieces[column + i][row + j].is_column_bomb:
 						match_all_in_column(i)
+					if all_pieces[column + i][row + j].is_color_bomb:
+						match_color(all_pieces[column + i][row + j].color)
 					all_pieces[column + i][row + j].matched = true
 
 func _on_destroy_timer_timeout():
