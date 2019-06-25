@@ -260,6 +260,7 @@ func touch_input():
 func swap_pieces(column, row, direction):
 	var first_piece = all_pieces[column][row]
 	var other_piece = all_pieces[column + direction.x][row + direction.y]
+	#check that first and other piece are not null:
 	if first_piece != null and other_piece != null:
 		if !restricted_move(Vector2(column, row)) and !restricted_move(Vector2(column, row) + direction):
 			# If both pieces are color bomb clear board
@@ -329,7 +330,9 @@ func find_matches(query = false, array = all_pieces):
 			if array[i][j] != null:
 				var current_color = array[i][j].color
 				if i > 0 and i < width - 1:
+					#check if left and right are not null
 					if array[i-1][j] != null and array[i+1][j] != null:
+						#check if left and right match current color
 						if array[i-1][j].color == current_color and array[i+1][j].color == current_color:
 							# There is a match
 							if query:
@@ -342,7 +345,9 @@ func find_matches(query = false, array = all_pieces):
 							add_to_array(Vector2(i + 1, j))
 							add_to_array(Vector2(i - 1, j))
 				if j > 0 and j < height - 1:
+					#check if above and bellow are not null
 					if array[i][j-1] != null and array[i][j+1] != null:
+						#check if above and bellow match current color
 						if array[i][j-1].color == current_color and array[i][j+1].color == current_color:
 							# There is a match
 							if query:
@@ -757,21 +762,30 @@ func find_all_matches():
 	clone_array = copy_array(all_pieces)
 	for i in width:
 		for j in height:
+			# Check that clone array position is not empty
 			if clone_array[i][j] != null:
 				if switch_and_check(Vector2(i,j), Vector2(1,0), clone_array) and is_in_grid(Vector2(i+1, j)):
 					#add the piece i, j to the hint_holder
 					if hint_match_color != "":
 						if hint_match_color == clone_array[i][j].color:
-							hint_holder.append(clone_array[i][j])
+							#check to make sure piece is not a lock space
+							if !restricted_move(Vector2(i,j)):
+								hint_holder.append(clone_array[i][j])
 						else:
-							hint_holder.append(clone_array[i+1][j])
+							#check to make sure piece is not a lock space
+							if !restricted_move(Vector2(i+1,j)):
+								hint_holder.append(clone_array[i+1][j])
 				if switch_and_check(Vector2(i,j), Vector2(0,1), clone_array) and is_in_grid(Vector2(i, j+1)):
 					#add the piece i, j to the hint_holder
 					if hint_match_color != "":
 						if hint_match_color == clone_array[i][j].color:
-							hint_holder.append(clone_array[i][j])
+							#check to make sure piece is not a lock space
+							if !restricted_move(Vector2(i,j)):
+								hint_holder.append(clone_array[i][j])
 						else:
-							hint_holder.append(clone_array[i][j+1])
+							#check to make sure piece is not a lock space
+							if !restricted_move(Vector2(i,j+1)):
+								hint_holder.append(clone_array[i][j+1])
 	return hint_holder
 
 func generate_hint():
