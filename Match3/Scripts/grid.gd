@@ -97,9 +97,14 @@ var animated_effect = preload("res://Scenes/AnimatedExplosion.tscn")
 # Sounds
 signal play_sound
 
+#Camera Variables
+signal place_camera
+
+
 func _ready():
 	state = move
 	randomize()
+	move_camera()
 	all_pieces = make_2d_array()
 	clone_array = make_2d_array()
 	spawn_preset_pieces()
@@ -114,6 +119,10 @@ func _ready():
 	emit_signal("setup_max_score", max_score)
 	if !is_counting_moves:
 		$Timer.start()
+
+func move_camera():
+	var new_pos = grid_to_pixel(float(width - 1)/2, float(height - 1)/2)
+	emit_signal("place_camera", new_pos)
 
 func restricted_fill(place):
 	# Check empty pieces
