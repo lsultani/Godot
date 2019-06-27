@@ -94,6 +94,9 @@ var current_collectibles = 0
 var particle_effect = preload("res://Scenes/ParticleEffect.tscn")
 var animated_effect = preload("res://Scenes/AnimatedExplosion.tscn")
 
+# Sounds
+signal play_sound
+
 func _ready():
 	state = move
 	randomize()
@@ -467,6 +470,7 @@ func destroy_matched():
 					all_pieces[i][j] = null
 					make_effect(particle_effect, i, j)
 					make_effect(animated_effect, i, j)
+					emit_signal("play_sound")
 					emit_signal("update_score", piece_value * streak)
 	move_checked = true
 	if was_matched:

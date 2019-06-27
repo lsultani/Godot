@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://Assets/UI/Backgrounds/background 2.png" type="Texture" id=1]
 [ext_resource path="res://Scenes/top_ui.tscn" type="PackedScene" id=2]
@@ -17,6 +17,7 @@
 [ext_resource path="res://Assets/Pieces/Blue Piece.png" type="Texture" id=15]
 [ext_resource path="res://Scenes/GameWinScreen.tscn" type="PackedScene" id=16]
 [ext_resource path="res://Scenes/PausePanel.tscn" type="PackedScene" id=17]
+[ext_resource path="res://Scripts/MusicPlayer.gd" type="Script" id=18]
 
 [node name="game_window" type="Node2D"]
 
@@ -89,6 +90,7 @@ one_shot = true
 [node name="GameOverPanel" parent="." instance=ExtResource( 12 )]
 
 [node name="GoalHolder" type="Node" parent="."]
+editor/display_folded = true
 script = ExtResource( 13 )
 
 [node name="Goal" parent="GoalHolder" instance=ExtResource( 14 )]
@@ -99,9 +101,12 @@ goal_string = "blue"
 [node name="GameWinScreen" parent="." instance=ExtResource( 16 )]
 
 [node name="PausePanel" parent="." instance=ExtResource( 17 )]
+
+[node name="MusicPlayer" type="Node" parent="."]
+script = ExtResource( 18 )
 [connection signal="pause_game" from="bottom_ui" to="PausePanel" method="_on_bottom_ui_pause_game"]
-[connection signal="check_goal" from="grid" to="GoalHolder" method="_on_grid_check_goal"]
 [connection signal="check_goal" from="grid" to="top_ui" method="_on_grid_check_goal"]
+[connection signal="check_goal" from="grid" to="GoalHolder" method="_on_grid_check_goal"]
 [connection signal="damage_concrete" from="grid" to="concrete_holder" method="_on_grid_damage_concrete"]
 [connection signal="damage_ice" from="grid" to="ice_holder" method="_on_grid_damage_ice"]
 [connection signal="damage_lock" from="grid" to="lock_holder" method="_on_grid_damage_lock"]
@@ -111,14 +116,15 @@ goal_string = "blue"
 [connection signal="make_ice" from="grid" to="ice_holder" method="_on_grid_make_ice"]
 [connection signal="make_lock" from="grid" to="lock_holder" method="_on_grid_make_lock"]
 [connection signal="make_slime" from="grid" to="slime_holder" method="_on_grid_make_slime"]
+[connection signal="play_sound" from="grid" to="MusicPlayer" method="_on_grid_play_sound"]
 [connection signal="setup_max_score" from="grid" to="top_ui" method="_on_grid_setup_max_score"]
 [connection signal="update_counter" from="grid" to="top_ui" method="_on_grid_update_counter"]
 [connection signal="update_score" from="grid" to="top_ui" method="_on_grid_update_score"]
 [connection signal="timeout" from="grid/Timer" to="grid" method="_on_Timer_timeout"]
 [connection signal="timeout" from="grid/ShuffleTimer" to="grid" method="_on_ShuffleTimer_timeout"]
 [connection signal="timeout" from="grid/HintTimer" to="grid" method="_on_HintTimer_timeout"]
-[connection signal="break_ice" from="ice_holder" to="GoalHolder" method="_on_ice_holder_break_ice"]
 [connection signal="break_ice" from="ice_holder" to="top_ui" method="_on_ice_holder_break_ice"]
+[connection signal="break_ice" from="ice_holder" to="GoalHolder" method="_on_ice_holder_break_ice"]
 [connection signal="remove_lock" from="lock_holder" to="grid" method="_on_lock_holder_remove_lock"]
 [connection signal="remove_concrete" from="concrete_holder" to="grid" method="_on_concrete_holder_remove_concrete"]
 [connection signal="remove_slime" from="slime_holder" to="grid" method="_on_slime_holder_remove_slime"]

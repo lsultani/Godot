@@ -19,6 +19,12 @@ config/name="Match3Game"
 run/main_scene="res://Scenes/game_window.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+ConfigManager="*res://Scripts/ConfigManager.gd"
+GameDataManager="*res://Scripts/GameDataManager.gd"
+SoundManager="*res://Scenes/SoundManager.tscn"
+
 [display]
 
 window/size/width=576
@@ -32,7 +38,7 @@ window/stretch/aspect="keep_width"
 
 ui_touch={
 "deadzone": 0.5,
-"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
+"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
  ]
 }
 
