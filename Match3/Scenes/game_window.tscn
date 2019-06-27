@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://Scenes/Camera2D.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Assets/UI/Backgrounds/background 2.png" type="Texture" id=2]
@@ -13,19 +13,16 @@
 [ext_resource path="res://Scripts/concrete_holder.gd" type="Script" id=11]
 [ext_resource path="res://Scripts/slime_holder.gd" type="Script" id=12]
 [ext_resource path="res://Scripts/GoalHolder.gd" type="Script" id=13]
-[ext_resource path="res://Scenes/Goal.tscn" type="PackedScene" id=14]
-[ext_resource path="res://Assets/Pieces/Blue Piece.png" type="Texture" id=15]
-[ext_resource path="res://Scenes/GameOverPanel.tscn" type="PackedScene" id=16]
-[ext_resource path="res://Scenes/GameWinScreen.tscn" type="PackedScene" id=17]
-[ext_resource path="res://Scenes/PausePanel.tscn" type="PackedScene" id=18]
-[ext_resource path="res://Scripts/MusicPlayer.gd" type="Script" id=19]
+[ext_resource path="res://Scenes/GameOverPanel.tscn" type="PackedScene" id=14]
+[ext_resource path="res://Scenes/GameWinScreen.tscn" type="PackedScene" id=15]
+[ext_resource path="res://Scenes/PausePanel.tscn" type="PackedScene" id=16]
+[ext_resource path="res://Scripts/MusicPlayer.gd" type="Script" id=17]
 
 [node name="game_window" type="Node2D"]
 
 [node name="Camera2D" parent="." instance=ExtResource( 1 )]
 
 [node name="UI Container" type="CanvasLayer" parent="."]
-editor/display_folded = true
 layer = -1
 
 [node name="background" type="TextureRect" parent="UI Container"]
@@ -97,22 +94,17 @@ wait_time = 0.5
 one_shot = true
 
 [node name="GoalHolder" type="Node" parent="."]
-editor/display_folded = true
 script = ExtResource( 13 )
 
-[node name="Goal" parent="GoalHolder" instance=ExtResource( 14 )]
-goal_texture = ExtResource( 15 )
-max_goal_needed = 99
-goal_string = "blue"
+[node name="GameOverPanel" parent="." instance=ExtResource( 14 )]
 
-[node name="GameOverPanel" parent="." instance=ExtResource( 16 )]
+[node name="GameWinScreen" parent="." instance=ExtResource( 15 )]
 
-[node name="GameWinScreen" parent="." instance=ExtResource( 17 )]
-
-[node name="PausePanel" parent="." instance=ExtResource( 18 )]
+[node name="PausePanel" parent="." instance=ExtResource( 16 )]
 
 [node name="MusicPlayer" type="Node" parent="."]
-script = ExtResource( 19 )
+script = ExtResource( 17 )
+[connection signal="notify_of_level" from="UI Container/top_ui" to="GoalHolder" method="_on_top_ui_notify_of_level"]
 [connection signal="pause_game" from="UI Container/bottom_ui" to="PausePanel" method="_on_bottom_ui_pause_game"]
 [connection signal="camera_effect" from="grid" to="Camera2D" method="_on_grid_camera_effect"]
 [connection signal="check_goal" from="grid" to="UI Container/top_ui" method="_on_grid_check_goal"]
@@ -143,5 +135,5 @@ script = ExtResource( 19 )
 [connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
 [connection signal="timeout" from="refill_timer" to="grid" method="_on_refill_timer_timeout"]
 [connection signal="create_goal" from="GoalHolder" to="UI Container/top_ui" method="_on_GoalHolder_create_goal"]
-[connection signal="game_won" from="GoalHolder" to="grid" method="_on_GoalHolder_game_won"]
 [connection signal="game_won" from="GoalHolder" to="GameWinScreen" method="_on_GoalHolder_game_won"]
+[connection signal="game_won" from="GoalHolder" to="grid" method="_on_GoalHolder_game_won"]

@@ -15,6 +15,6 @@ script = ExtResource( 1 )
 [connection signal="read_sound" from="." to="Settings" method="_on_Game_Menu_read_sound"]
 [connection signal="back_button" from="Settings" to="." method="_on_Settings_back_button"]
 [connection signal="sound_change" from="Settings" to="." method="_on_Settings_sound_change"]
-[connection signal="play_pressed" from="Main" to="Main" method="_on_Main_play_pressed"]
 [connection signal="play_pressed" from="Main" to="." method="_on_Main_play_pressed"]
+[connection signal="play_pressed" from="Main" to="Main" method="_on_Main_play_pressed"]
 [connection signal="settings_pressed" from="Main" to="." method="_on_Main_settings_pressed"]

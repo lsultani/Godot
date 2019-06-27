@@ -16,6 +16,7 @@ level_to_load = "res://Levels/Level_1.tscn"
 [node name="LevelButton2" parent="." instance=ExtResource( 2 )]
 position = Vector2( 271.941, 160.692 )
 level = 2
+level_to_load = "res://Levels/Level_2.tscn"
 
 [node name="LevelButton3" parent="." instance=ExtResource( 2 )]
 position = Vector2( 465.595, 103.008 )
