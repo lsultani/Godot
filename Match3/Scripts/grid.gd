@@ -99,7 +99,7 @@ signal play_sound
 
 #Camera Variables
 signal place_camera
-
+signal camera_effect
 
 func _ready():
 	state = move
@@ -480,6 +480,7 @@ func destroy_matched():
 					make_effect(particle_effect, i, j)
 					make_effect(animated_effect, i, j)
 					emit_signal("play_sound")
+					cam_effect()
 					emit_signal("update_score", piece_value * streak)
 	move_checked = true
 	if was_matched:
@@ -814,6 +815,9 @@ func destroy_hint():
 	if hint:
 		hint.queue_free()
 		hint = null
+
+func cam_effect():
+	emit_signal("camera_effect")
 
 func _on_destroy_timer_timeout():
 	destroy_matched()
