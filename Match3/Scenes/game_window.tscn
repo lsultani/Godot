@@ -34,6 +34,7 @@ texture = ExtResource( 2 )
 margin_right = 576.0
 margin_bottom = 192.0
 goal_prefab = ExtResource( 4 )
+current_level = 1
 
 [node name="bottom_ui" parent="UI Container" instance=ExtResource( 5 )]
 
@@ -107,8 +108,8 @@ script = ExtResource( 17 )
 [connection signal="notify_of_level" from="UI Container/top_ui" to="GoalHolder" method="_on_top_ui_notify_of_level"]
 [connection signal="pause_game" from="UI Container/bottom_ui" to="PausePanel" method="_on_bottom_ui_pause_game"]
 [connection signal="camera_effect" from="grid" to="Camera2D" method="_on_grid_camera_effect"]
-[connection signal="check_goal" from="grid" to="UI Container/top_ui" method="_on_grid_check_goal"]
 [connection signal="check_goal" from="grid" to="GoalHolder" method="_on_grid_check_goal"]
+[connection signal="check_goal" from="grid" to="UI Container/top_ui" method="_on_grid_check_goal"]
 [connection signal="damage_concrete" from="grid" to="concrete_holder" method="_on_grid_damage_concrete"]
 [connection signal="damage_ice" from="grid" to="ice_holder" method="_on_grid_damage_ice"]
 [connection signal="damage_lock" from="grid" to="lock_holder" method="_on_grid_damage_lock"]
@@ -126,8 +127,8 @@ script = ExtResource( 17 )
 [connection signal="timeout" from="grid/Timer" to="grid" method="_on_Timer_timeout"]
 [connection signal="timeout" from="grid/ShuffleTimer" to="grid" method="_on_ShuffleTimer_timeout"]
 [connection signal="timeout" from="grid/HintTimer" to="grid" method="_on_HintTimer_timeout"]
-[connection signal="break_ice" from="ice_holder" to="UI Container/top_ui" method="_on_ice_holder_break_ice"]
 [connection signal="break_ice" from="ice_holder" to="GoalHolder" method="_on_ice_holder_break_ice"]
+[connection signal="break_ice" from="ice_holder" to="UI Container/top_ui" method="_on_ice_holder_break_ice"]
 [connection signal="remove_lock" from="lock_holder" to="grid" method="_on_lock_holder_remove_lock"]
 [connection signal="remove_concrete" from="concrete_holder" to="grid" method="_on_concrete_holder_remove_concrete"]
 [connection signal="remove_slime" from="slime_holder" to="grid" method="_on_slime_holder_remove_slime"]
@@ -135,5 +136,5 @@ script = ExtResource( 17 )
 [connection signal="timeout" from="collapse_timer" to="grid" method="_on_collapse_timer_timeout"]
 [connection signal="timeout" from="refill_timer" to="grid" method="_on_refill_timer_timeout"]
 [connection signal="create_goal" from="GoalHolder" to="UI Container/top_ui" method="_on_GoalHolder_create_goal"]
-[connection signal="game_won" from="GoalHolder" to="GameWinScreen" method="_on_GoalHolder_game_won"]
 [connection signal="game_won" from="GoalHolder" to="grid" method="_on_GoalHolder_game_won"]
+[connection signal="game_won" from="GoalHolder" to="GameWinScreen" method="_on_GoalHolder_game_won"]
