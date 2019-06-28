@@ -33,15 +33,18 @@ signal damage_slime
 # Preset Board
 export (PoolVector3Array) var preset_spaces
 
+export (PoolStringArray) var possible_pieces
+
 # The pieces array
-var possible_pieces = [
-	preload("res://Scenes/blue_piece.tscn"),
-	preload("res://Scenes/green_piece.tscn"),
-	preload("res://Scenes/light_green_piece.tscn"),
-	preload("res://Scenes/orange_piece.tscn"),
-	preload("res://Scenes/pink_piece.tscn"),
-	preload("res://Scenes/yellow_piece.tscn")
-]
+#var possible_pieces = [
+#	preload("res://Scenes/blue_piece.tscn"),
+#	preload("res://Scenes/green_piece.tscn"),
+#	preload("res://Scenes/light_green_piece.tscn"),
+#	preload("res://Scenes/orange_piece.tscn"),
+#	preload("res://Scenes/pink_piece.tscn"),
+#	preload("res://Scenes/yellow_piece.tscn")
+#]
+
 
 # Hints Variables
 export (PackedScene) var hint_effect
@@ -166,12 +169,13 @@ func spawn_pieces():
 			if !restricted_fill(Vector2(i,j)) and all_pieces[i][j] == null:
 				#Choose random number & store
 				var rand = floor( rand_range(0, possible_pieces.size() ))
-				var piece = possible_pieces[rand].instance()
+				#var piece = possible_pieces[rand].instance()
+				var piece = load(possible_pieces[rand]).instance() 
 				var loops = 0
 				while( match_at(i, j, piece.color) and loops < 100 ):
 					rand = floor( rand_range(0, possible_pieces.size() ))
 					loops += 1
-					piece = possible_pieces[rand].instance()
+					piece = load(possible_pieces[rand]).instance()
 				#Instance that piece from the array
 				add_child(piece)
 				piece.position = grid_to_pixel(i, j)
@@ -576,12 +580,12 @@ func refill_columns():
 			if all_pieces[i][j] == null and !restricted_fill(Vector2(i,j)):
 				#Choose random number & store
 				var rand = floor( rand_range(0, possible_pieces.size() ))
-				var piece = possible_pieces[rand].instance()
+				var piece = load(possible_pieces[rand]).instance()
 				var loops = 0
 				while( match_at(i, j, piece.color) and loops < 100 ):
 					rand = floor( rand_range(0, possible_pieces.size() ))
 					loops += 1
-					piece = possible_pieces[rand].instance()
+					piece = load(possible_pieces[rand]).instance()
 					
 				#Instance that piece from the array
 				add_child(piece)

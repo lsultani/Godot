@@ -20,11 +20,12 @@ func _on_grid_update_score(amount_to_change):
 	current_score += amount_to_change
 	update_score_bar()
 	score_label.text = String(current_score)
-	GameDataManager.level_info[current_level]["high score"] = current_score
-	GameDataManager.level_info[current_level]["stars unlocked"] = current_score == max_counter
+	if GameDataManager.level_info.has(current_level):
+		GameDataManager.level_info[current_level]["high score"] = current_score
+		GameDataManager.level_info[current_level]["stars unlocked"] = current_score == max_counter
 	if current_score >= score_bar.max_value:
 		GameDataManager.level_info[current_level]["stars unlocked"] = 1
-	print(GameDataManager.level_info[current_level])
+
 
 func _on_grid_update_counter(amount_to_change = -1):
 	max_counter += amount_to_change
